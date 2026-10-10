@@ -112,3 +112,61 @@ static void v_x(FILE **passengers, FILE **checkin){
         break;
     }
 }
+
+static void h(FILE *passengers){
+    int count[256] = {0};
+    int upper[26], digits[10];
+    int i, j, tmp, c;
+
+    if (passengers == NULL){
+        printf("H: Neotvoreny subor.\n");
+        return;
+    }
+
+    rewind(passengers);
+    while((c = fgets(passengers)) != EOF)
+        count[(unsigned char)c]++; // Take the character c, reinterpret its byte value as an unsigned number (0–255), use it as an index into the count array, and increment that counter by one.
+    
+        // prepare character arrays for sorting
+    for (i = 0; i < 26; i++)
+        upper[i] = 'A' + i;
+    for (i = 0; i < 10; i++)
+        digits[i] = '0' + i;
+
+    for(i = 1; i < 26; i++){
+        tmp = upper[i];
+        j = i - 1;
+        while (j >= 0 && count[upper[j]] < count[tmp]) {
+            upper[j + 1] = upper[j];
+            j--;
+        }
+        upper[j + 1] = tmp;
+    }
+
+    for (i = 1; i < 10; i++){
+        tmp = digits[i];
+        j = i - 1;
+        while (j >= 0 && count[digits[j]] < count[tmp]){
+            digits[j + 1] = digits[j];
+            j--;
+        }
+        degits[j + 1] = tmp;
+    }
+
+    for (i = 0; i < 26; i++)
+        if (isupper(upper[i]) && count[upper[i]] > 0)
+            printf("%c : %d\n", upper[i], count[upper[i]]);
+
+
+    for (c = 'a'; c <= 'z'; c++){
+        if (islower(c) && count[c] > 0){
+            printf("%c : %d\n", c, count[c])
+        }
+    }
+
+    for (i = 0; i < 10; i++){
+        if (isdigit(digits[i]) && count[digits[i]] > 0){
+            printf("%c : %d\n", digits[i], count[digits[i]]);
+        }
+    }
+}
