@@ -94,3 +94,21 @@ static void v1(FILE **passengers, FILE **checkin){
         printf("\n");
     }
 }
+
+static void v_x(FILE **passengers, FILE **checkin){
+    char option;
+
+    if (scanf(" %c", &option) != 1)
+        return;
+
+    switch (option)
+    {
+    case '1':
+        v(passengers, checkin);
+        break;
+    
+    default:
+        printf("V: Nespravna volba vypisu.\n");
+        break;
+    }
+}
