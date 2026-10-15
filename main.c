@@ -3,26 +3,32 @@
 #include <string.h>
 #include <ctype.h>
 
-#define YEAR 2026
-#define MAX_LINE 256
+#define YEAR 2026 // Current year for age calculation
+#define MAX_LINE 256 // Max Line lenght
 
+// Strips trailing newline characters from a string
 static void newline(char *s){
     s[strcspn(s, "\r\n")] = '\0';
 }
+
+/* Parses birth date in format "DDMMYYYY"
+Last 4 chars = year, previus 2 = month, rest = day
+*/
 
 static void parse_birth_date(const char *date, int *year, int *month, int *day){
     char buf[MAX_LINE];
     int len = (int)strlen(date);
 
+    //Year: last 4 characters
     *year = (len >= 4) ? atoi(date + len - 4) : 0;
-
+    // Month: 2 characters before year
     *month = 0;
     if (len >= 6){
         strncpy(buf, date + len - 6, 2);
         buf[2] = '\0';
         *month = atoi(buf);
     }
-
+    //Day: everything before month
     *day = 0;
     if (len > 6){
         strncpy(buf, date, (size_t)(len - 6));
@@ -35,11 +41,13 @@ static int read_record(FILE *f, char *flight, char *first_name, char *last_name,
     char *birth_date, char *seat, char *baggage){
         char line[MAX_LINE];
 
+        //Skip lines until one starting with '#'
         do{
             if (fgets(line, sizeof(line), f) == NULL)
                 return 0;
         } while (line[0] != '#');
 
+        // Read the 6 data fields
         if (fgets(flight, MAX_LINE, f) == NULL) 
             return 0;
         if (fgets(first_name, MAX_LINE, f) == NULL) 
@@ -53,6 +61,7 @@ static int read_record(FILE *f, char *flight, char *first_name, char *last_name,
         if (fgets(baggage, MAX_LINE, f) == NULL) 
             return 0;
 
+        // Remove newlines from each field
         newline(flight);
         newline(first_name);
         newline(last_name);
@@ -63,15 +72,20 @@ static int read_record(FILE *f, char *flight, char *first_name, char *last_name,
         return 1;
     }
 
+    /* prints all passangers from "zoznamCK.txt" with flight, name
+    age and seat. Files are opened on first call and kept open
+    */
 static void v1(FILE **passengers, FILE **checkin){
     char flight[MAX_LINE], first_name[MAX_LINE], last_name[MAX_LINE], birth_date[MAX_LINE], seat[MAX_LINE], baggage[MAX_LINE];
     int year, month, day;
 
+    //Open files if not already open
     if (*passengers == NULL)
         *passengers = fopen("zoznamCK.txt", "r");
     if (*checkin == NULL)
         *checkin = fopen("checkin1.txt", "r");
     
+    // Handle open errors
     if (*passengers == NULL || *checkin == NULL){
         printf("V1: Neotvorene txt subory.\n");
         if (*passengers != NULL){
@@ -85,6 +99,7 @@ static void v1(FILE **passengers, FILE **checkin){
         return;
     }
 
+    // Rewind and read all records
     rewind(*passengers);
     while (read_record(*passengers, flight, first_name, last_name, birth_date, seat, baggage)){
         parse_birth_date(birth_date, &year, &month, &day);
@@ -95,6 +110,8 @@ static void v1(FILE **passengers, FILE **checkin){
     }
 }
 
+
+/* Reads next char and dispatches to the right funtion*/
 static void v_x(FILE **passengers, FILE **checkin){
     char option;
 
@@ -104,7 +121,7 @@ static void v_x(FILE **passengers, FILE **checkin){
     switch (option)
     {
     case '1':
-        v(passengers, checkin);
+        v1(passengers, checkin);
         break;
     
     default:
@@ -113,9 +130,10 @@ static void v_x(FILE **passengers, FILE **checkin){
     }
 }
 
+/* character frequency histogram of passengers file*/
 static void h(FILE *passengers){
-    int count[256] = {0};
-    int upper[26], digits[10];
+    int count[256] = {0}; // Counters for all byte values
+    int upper[26], digits[10]; // Arrays for sorting
     int i, j, tmp, c;
 
     if (passengers == NULL){
@@ -123,8 +141,9 @@ static void h(FILE *passengers){
         return;
     }
 
+    // Count each character in the file
     rewind(passengers);
-    while((c = fgets(passengers)) != EOF)
+    while((c = fgetc(passengers)) != EOF)
         count[(unsigned char)c]++; // Take the character c, reinterpret its byte value as an unsigned number (0–255), use it as an index into the count array, and increment that counter by one.
     
         // prepare character arrays for sorting
@@ -150,7 +169,7 @@ static void h(FILE *passengers){
             digits[j + 1] = digits[j];
             j--;
         }
-        degits[j + 1] = tmp;
+        digits[j + 1] = tmp;
     }
 
     for (i = 0; i < 26; i++)
@@ -160,13 +179,37 @@ static void h(FILE *passengers){
 
     for (c = 'a'; c <= 'z'; c++){
         if (islower(c) && count[c] > 0){
-            printf("%c : %d\n", c, count[c])
+            printf("%c : %d\n", c, count[c]);
         }
     }
 
     for (i = 0; i < 10; i++){
         if (isdigit(digits[i]) && count[digits[i]] > 0){
             printf("%c : %d\n", digits[i], count[digits[i]]);
+        }
+    }
+}
+
+/* 'v' - dispatch to v_x
+    'h' - character histogram
+*/
+int main(){
+    FILE *passengers = NULL;
+    FILE *checkin = NULL;
+    char command;
+
+    while (scanf(" %c", &command) == 1){
+        switch (command)
+        {
+        case 'v':
+            v_x(&passengers, &checkin);
+            break;
+        case 'h':
+            h(passengers);
+            break;
+        
+        default:
+            break;
         }
     }
 }
