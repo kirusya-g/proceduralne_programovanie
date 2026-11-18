@@ -38,40 +38,38 @@ static void parse_birth_date(const char *date, int *year, int *month, int *day){
 }
 
 // Reads a single passenger record starting with '#' from the file
-static int read_record(FILE *f, char *flight, char *first_name, char *last_name, 
-    char *birth_date, char *seat, char *baggage){
-        char line[MAX_LINE];
+static int read_record(FILE *f, char *flight, char *first_name,
+    char *last_name, char *birth_date, char *seat, char *baggage){
 
-        //Skip lines until one starting with '#'
-        do{
-            if (fgets(line, sizeof(line), f) == NULL)
-                return 0;
-        } while (line[0] != '#');
+    char line[MAX_LINE];
 
-        // Read the 6 data fields
-        if (fgets(flight, MAX_LINE, f) == NULL) 
+    do {
+        if (fgets(line, sizeof(line), f) == NULL)
             return 0;
-        if (fgets(first_name, MAX_LINE, f) == NULL) 
-            return 0;
-        if (fgets(last_name, MAX_LINE, f) == NULL) 
-            return 0;
-        if (fgets(birth_date, MAX_LINE, f) == NULL) 
-            return 0;
-        if (fgets(seat, MAX_LINE, f) == NULL) 
-            return 0;
-        if (fgets(baggage, MAX_LINE, f) == NULL) 
-            return 0;
+    } while (line[0] == '\n' || line[0] == '\r');
 
-        // Remove newlines from each field
-        newline(flight);
-        newline(first_name);
-        newline(last_name);
-        newline(birth_date);
-        newline(seat);
-        newline(baggage);
-
-        return 1;
+    if (line[0] == '#') {
+        if (fgets(flight, MAX_LINE, f) == NULL)
+            return 0;
+    } else {
+        strcpy(flight, line);
     }
+
+    if (fgets(first_name, MAX_LINE, f) == NULL) return 0;
+    if (fgets(last_name, MAX_LINE, f) == NULL) return 0;
+    if (fgets(birth_date, MAX_LINE, f) == NULL) return 0;
+    if (fgets(seat, MAX_LINE, f) == NULL) return 0;
+    if (fgets(baggage, MAX_LINE, f) == NULL) return 0;
+
+    newline(flight);
+    newline(first_name);
+    newline(last_name);
+    newline(birth_date);
+    newline(seat);
+    newline(baggage);
+
+    return 1;
+}
 
 // creates a heap copy of a string
 static char *copy_string(const char *s){
